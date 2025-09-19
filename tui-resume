@@ -1,0 +1,281 @@
+#!/usr/bin/env bash
+#
+# A TUI to display a scrollable and interactive resume.
+#
+# Author: Siddharth Agarwal
+# Date: September 19, 2025
+#
+
+# --- CONFIGURATION ---
+MIN_COLUMNS=110
+MIN_LINES=40
+HIGHLIGHT_BG=238 # A dark gray for the selection highlight
+TEXT_COLOR=189    # Grey Pink for general text
+TITLE_COLOR=39    # Blue for section titles
+NAME_COLOR=45     # Cyan for the name
+PROJECT_TITLE_COLOR=202 # Orange for project titles
+BORDER_COLOR=17 # Alternate dark blue for borders
+
+# --- BASH 3.x COMPATIBLE PROJECT DATA ---
+# Using two separate, indexed arrays. The index of a title
+# must match the index of its corresponding URL.
+
+PROJECT_TITLES=(
+    "*Onion Routing Network*"
+    "*Network File Server*"
+    "*C Shell*"
+    "*Strife – Payment Gateway Simulation*"
+    "*Restaurant DBMS*"
+    "*BaseMLib*"
+    "*ClarityAI*"
+)
+
+PROJECT_URLS=(
+    "https://github.com/siddharth-ag2004/DS-Project-Onion-Routing"
+    "https://github.com/siddharth-ag2004/Network_File_System"
+    "https://github.com/siddharth-ag2004/Shell"
+    "https://github.com/siddharth-ag2004/Distributed-grpc-systems"
+    "https://github.com/siddharth-ag2004/Restaurant_DBMS"
+    "https://github.com/siddharth-ag2004/BaseMLib"
+    "https://github.com/himanshuyv/ClarityAI"
+)
+
+# The full resume content is stored in this array.
+RESUME_CONTENT=(
+    "SIDDHARTH AGARWAL"
+    "sidag2020@gmail.com | Github | Linkedin | +91 8097734940"
+    ""
+    "EDUCATION"
+    "--------------------------------------------------------------------------------------------"
+    "*International Institute of Information Technology - Hyderabad* --- 9.01 CGPA"
+    "  B.Tech.: Computer Science Engineering"
+    ""
+    "*Pace Junior Science College* --- 89.83%"
+    "  Class XII: HSC Board (Maharashtra)"
+    ""
+    "*Gokuldham High School* --- 98.5%"
+    "  Class X: Indian Certificate of Secondary Education"
+    ""
+    "EXPERIENCE"
+    "--------------------------------------------------------------------------------------------"
+    "*Oracle* [OCI (Oracle Cloud) Intern]"
+    "  - Developed an API to evaluate OCI Sign-On policy configurations."
+    "  - Improved administrator confidence and reduced support tickets."
+    ""
+    "*Perceptive Analytics Pvt Ltd.* [Language Input Development Intern]"
+    "  - Created a Chrome extension to auto-complete Telegu sentences."
+    "  - Used Javascript to monitor user input and display model output."
+    ""
+    "RELEVANT COURSEWORK"
+    "--------------------------------------------------------------------------------------------"
+    "  • Data Structures and Algorithms      • Computer Systems Organization     • Data and Applications"
+    "  • Introduction to Information Security  • Operating Systems and Networks    • Statistical Methods in AI"
+    "  • Software Programming for Performance  • Probability and Statistics      • Computer Graphics"
+    "  • Distributed Systems                 • Computer Vision                   • Digital Image Processing"
+    ""
+    "PROJECTS"
+    "--------------------------------------------------------------------------------------------"
+    "*Onion Routing Network*"
+    "  - Developed a Tor-inspired network with multiple encryptions and adaptive load balancing."
+    ""
+    "*Network File Server*"
+    "  - Built a distributed network file system in C with multi-threading and redundancy."
+    ""
+    "*C Shell*"
+    "  - Implemented a Linux shell in C from scratch with I/O redirection and process handling."
+    ""
+    "*Strife – Payment Gateway Simulation*"
+    "  - Built a gRPC-based distributed payment system in Go with TLS, RBA, and 2PC."
+    ""
+    "*Restaurant DBMS*"
+    "  - Created a complete Database Management System for a restaurant using MySQL."
+    ""
+    "*BaseMLib*"
+    "  - A foundational library implementing classical and deep learning algorithms from scratch."
+    ""
+    "*ClarityAI*"
+    "  - Created an NLP-powered system for sentiment analysis during a hackathon."
+    ""
+    "SKILLS"
+    "--------------------------------------------------------------------------------------------"
+    "  Languages: C, C++, Python, Go, Java, x86 Assembly, Javascript, HTML/CSS"
+    "  Backend:   REST, Threading, OpenMP, gRPC, Sockets, SQLite, MariaDB, Flask"
+    "  Tools:     Linux, Git, Github, Bash, CMake"
+    ""
+    "ACHIEVEMENTS"
+    "--------------------------------------------------------------------------------------------"
+    "  - JEE Advanced Rank: AIR 997"
+    "  - JEE Mains: 99.87 percentile (AIR 1215)"
+    "  - Megathon: Led the team to secure a spot at the finals of Hyderabad's hackathon."
+    "  - Deans List Award: Awarded for coming top 10% of the batch"
+)
+
+# --- GLOBAL STATE ---
+SCROLL_OFFSET=0
+SELECTED_LINE=0
+
+# A simplified version of tput for performance.
+tput() {
+	local ESC=$'\x1b'
+	case "$1" in
+		sgr0) echo -n "$ESC[0m";; bold) echo -n "$ESC[1m";;
+		setaf) echo -n "$ESC[38;5;$2m";; setab) echo -n "$ESC[48;5;$2m";;
+		smcup) echo -n "$ESC[?1049h";; rmcup) echo -n "$ESC[?1049l";;
+		civis) echo -n "$ESC[?25l";; cnorm) echo -n "$ESC[?25h";;
+		clear) echo -n "$ESC[2J";;
+		cup) echo -n "$ESC[$(($2 + 1));$(($3 + 1))H";;
+		*) command tput "$@";;
+	esac
+}
+
+fatal() { tput setaf 1; echo "[error]" "$@" >&2; tput sgr0; exit 1; }
+cleanup() { tput cnorm; tput rmcup; stty echo; }
+
+# Draws a decorative multi-layered box around the content (first 2 layers only).
+draw-box() {
+    local layers=($BORDER_COLOR $((BORDER_COLOR + 1)) $((BORDER_COLOR + 2)) $((BORDER_COLOR +3))) # Dark blue shades
+    for ((layer = 0; layer < ${#layers[@]}; layer++)); do
+        local offset=$layer
+        tput sgr0; tput setab "${layers[layer]}" # Set background color for the layer
+
+        # Draw top and bottom borders
+        local horizontal_border=''
+        for ((i = 0; i < COLUMNS - (offset * 4); i++)); do horizontal_border+=' '; done
+        tput cup "$offset" "$((offset * 2))"; echo -n "$horizontal_border"
+        tput cup "$((LINES - offset - 1))" "$((offset * 2))"; echo -n "$horizontal_border"
+
+        # Draw left and right borders
+        local x_l=$((offset * 2)) x_r=$((COLUMNS - (offset * 2) - 2))
+        for ((i = offset; i < LINES - offset - 1; i++)); do
+            tput cup "$i" "$x_l"; echo -n '  '
+            tput cup "$i" "$x_r"; echo -n '  '
+        done
+    done
+    tput sgr0
+}
+
+# Draws the resume content, highlighting the selected line.
+draw-resume() {
+    local start_y=6 end_y=$((LINES-6)) x=12
+    local visible_lines=$((end_y - start_y))
+
+    for (( i=0; i < visible_lines; i++ )); do
+        local current_y=$((start_y + i))
+        local content_index=$((i + SCROLL_OFFSET))
+        tput cup "$current_y" "$x"; printf "%-$(($COLUMNS-x*2))s" " " # Clear line
+
+        if (( content_index < ${#RESUME_CONTENT[@]} )); then
+            local line="${RESUME_CONTENT[content_index]}"
+            tput cup "$current_y" "$x"
+
+            if (( content_index == SELECTED_LINE )); then
+                tput setab "$HIGHLIGHT_BG"
+                # Check if the selected line is a project title
+                local is_project_title=false
+                for project_title in "${PROJECT_TITLES[@]}"; do
+                    if [[ "$line" == "$project_title" ]]; then
+                        tput setaf 27 # Change text color to blue for hovered link
+                        tput smul    # Underline the text
+                        is_project_title=true
+                        break
+                    fi
+                done
+                if ! $is_project_title; then
+                    # Reapply the original color for non-link lines
+                    case "$line" in
+                        \**\**)
+                            line="${line//\*/}" # Remove `**`
+                            tput bold; tput setaf "$PROJECT_TITLE_COLOR" ;; # Use project title color
+                        EDUCATION|EXPERIENCE|RELEVANT*|PROJECTS|SKILLS|ACHIEVEMENTS)
+                            tput bold; tput setaf "$TITLE_COLOR" ;; # Use section title color
+                        "SIDDHARTH AGARWAL")
+                            tput bold; tput setaf "$NAME_COLOR" ;; # Use name color
+                        *) tput setaf "$TEXT_COLOR" ;; # Use general text color
+                    esac
+                fi
+            else
+                # Apply the original color for non-selected lines
+                case "$line" in
+                    \**\**)
+                        line="${line//\*/}" # Remove `**`
+                        tput bold; tput setaf "$PROJECT_TITLE_COLOR" ;; # Use project title color
+                    EDUCATION|EXPERIENCE|RELEVANT*|PROJECTS|SKILLS|ACHIEVEMENTS)
+                        tput bold; tput setaf "$TITLE_COLOR" ;; # Use section title color
+                    "SIDDHARTH AGARWAL")
+                        tput bold; tput setaf "$NAME_COLOR" ;; # Use name color
+                    *) tput setaf "$TEXT_COLOR" ;; # Use general text color
+                esac
+            fi
+
+            echo -n "$line"
+            tput rmul # Remove underline after printing the line
+        fi
+        tput sgr0
+    done
+}
+
+main() {
+	if [[ ! -t 1 ]]; then fatal 'stdout must be a terminal'; fi
+	COLUMNS=$(tput cols); LINES=$(tput lines)
+	if ((COLUMNS < MIN_COLUMNS || LINES < MIN_LINES)); then
+		fatal "terminal too small: must be >= ${MIN_COLUMNS}x${MIN_LINES}"
+	fi
+
+	trap cleanup EXIT
+	tput smcup; tput civis; stty -echo
+
+	tput clear; tput setab 235; draw-box 0; tput setab 236; draw-box 1
+	draw-resume
+
+    local help_msg="↑/k ↓/j: Navigate | Enter: Open Link | q: Quit"
+    tput cup $((LINES - 4)) $(( (COLUMNS - ${#help_msg}) / 2 )); tput setaf 245; echo "$help_msg"
+
+    local escape_char=$'\x1b'
+    while true; do
+		local key; read -rsn1 key
+		if [[ $key == "$escape_char" ]]; then read -rsn2 key; fi
+
+		case "$key" in
+			'[A'|k) ((SELECTED_LINE--));;
+			'[B'|j) ((SELECTED_LINE++));;
+            "") # Enter key
+                line_text="${RESUME_CONTENT[SELECTED_LINE]}"
+                
+                # --- Bash 3.x Compatible URL Lookup ---
+                # Loop through the project titles to find a match.
+                for i in "${!PROJECT_TITLES[@]}"; do
+                    if [[ "${PROJECT_TITLES[$i]}" == "$line_text" ]]; then
+                        # Match found, get the URL from the parallel array using the same index.
+                        url="${PROJECT_URLS[$i]}"
+                        cleanup
+                        if command -v xdg-open &> /dev/null; then xdg-open "$url"
+                        elif command -v open &> /dev/null; then open "$url"
+                        else echo "Could not find 'xdg-open' or 'open' to open the link."
+                        fi
+                        # Redraw the TUI after opening the link
+                        tput smcup; tput civis; stty -echo
+                        tput clear; tput setab 235; draw-box 0; tput setab 236; draw-box 1
+                        draw-resume
+                        tput cup $((LINES - 4)) $(( (COLUMNS - ${#help_msg}) / 2 )); tput setaf 245; echo "$help_msg"
+                        break
+                    fi
+                done
+                ;;
+            q) break;;
+		esac
+
+        if ((SELECTED_LINE < 0)); then SELECTED_LINE=0; fi
+        if ((SELECTED_LINE >= ${#RESUME_CONTENT[@]})); then SELECTED_LINE=$((${#RESUME_CONTENT[@]}-1)); fi
+
+        local visible_lines=$((LINES - 12))
+        if (( SELECTED_LINE < SCROLL_OFFSET )); then
+            SCROLL_OFFSET=$SELECTED_LINE
+        elif (( SELECTED_LINE >= SCROLL_OFFSET + visible_lines )); then
+            SCROLL_OFFSET=$((SELECTED_LINE - visible_lines + 1))
+        fi
+
+        draw-resume
+    done
+}
+
+main
