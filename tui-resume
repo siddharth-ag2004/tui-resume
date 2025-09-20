@@ -175,8 +175,12 @@ colorize_line() {
     # Check if the line matches a project title
     for project_title in "${PROJECT_TITLES[@]}"; do
         if [[ "$line" == "$project_title" ]]; then
-            tput setaf 27 # Blue for hovered project titles
-            tput smul     # Underline the text
+            if (( content_index == SELECTED_LINE )); then
+                tput setaf 27 # Blue for hovered project titles
+                tput smul     # Underline the text
+            else
+                tput setaf "$PROJECT_TITLE_COLOR" # Orange for non-hovered project titles
+            fi
             is_project_title=true
             break
         fi
