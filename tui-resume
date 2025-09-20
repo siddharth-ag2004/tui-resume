@@ -41,24 +41,17 @@ PROJECT_URLS=(
     "https://github.com/himanshuyv/ClarityAI"
 )
 
-# Function to center-align a line of text with an additional offset of -40
-center_align() {
-    local text="$1"
-    local text_length=${#text}
-    local padding=$(( (COLUMNS - text_length ) / 2 ))
-    printf "%*s%s" "$padding" "" "$text"
-}
 
 # The full resume content is stored in this array.
 RESUME_CONTENT=(
-    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$\$\$\$\$\$\\  \$\$\$\$\$\$\$\$\\  \$\$\$\$\$\$\\  \$\$\\   \$\$\\ \$\$\\      \$\$\\ \$\$\$\$\$\$\$\$\\       $(tput sgr0)")"
-    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$  __\$\$\\ \$\$  _____|\$\$  __\$\$\\ \$\$ |  \$\$ |\$\$\$\\    \$\$\$ |\$\$  _____|      $(tput sgr0)")"
-    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$ |  \$\$ |\$\$ |      \$\$ /  \\__|\$\$ |  \$\$ |\$\$\$\$\\  \$\$\$\$ |\$\$ |            $(tput sgr0)")"
-    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$\$\$\$\$\$  |\$\$\$\$\$\\    \\\$\$\$\$\$\$\\  \$\$ |  \$\$ |\$\$\\\$\$\\\$\$ \$\$ |\$\$\$\$\$\\          $(tput sgr0)")"
-    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$  __\$\$< \$\$  __|    \\____\$\$\\ \$\$ |  \$\$ |\$\$ \\\$\$\$  \$\$ |\$\$  __|         $(tput sgr0)")"
-    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$ |  \$\$ |\$\$ |      \$\$\\   \$\$ |\$\$ |  \$\$ |\$\$ |\\\$  /\$\$ |\$\$ |            $(tput sgr0)")"
-    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$ |  \$\$ |\$\$\$\$\$\$\$\$\\ \\\$\$\$\$\$\$  |\\\$\$\$\$\$\$  |\$\$ | \\_/ \$\$ |\$\$\$\$\$\$\$\$\\       $(tput sgr0)")"
-    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\\__|  \\__|\\________| \\______/  \\______/ \\__|     \\__|\\________|      $(tput sgr0)")"
+    "$(tput setaf $ASCII_ART_COLOR)\$\$\$\$\$\$\$\\  \$\$\$\$\$\$\$\$\\  \$\$\$\$\$\$\\  \$\$\\   \$\$\\ \$\$\\      \$\$\\ \$\$\$\$\$\$\$\$\\       $(tput sgr0)"
+    "$(tput setaf $ASCII_ART_COLOR)\$\$  __\$\$\\ \$\$  _____|\$\$  __\$\$\\ \$\$ |  \$\$ |\$\$\$\\    \$\$\$ |\$\$  _____|      $(tput sgr0)"
+    "$(tput setaf $ASCII_ART_COLOR)\$\$ |  \$\$ |\$\$ |      \$\$ /  \\__|\$\$ |  \$\$ |\$\$\$\$\\  \$\$\$\$ |\$\$ |            $(tput sgr0)"
+    "$(tput setaf $ASCII_ART_COLOR)\$\$\$\$\$\$\$  |\$\$\$\$\$\\    \\\$\$\$\$\$\$\\  \$\$ |  \$\$ |\$\$\\\$\$\\\$\$ \$\$ |\$\$\$\$\$\\          $(tput sgr0)"
+    "$(tput setaf $ASCII_ART_COLOR)\$\$  __\$\$< \$\$  __|    \\____\$\$\\ \$\$ |  \$\$ |\$\$ \\\$\$\$  \$\$ |\$\$  __|         $(tput sgr0)"
+    "$(tput setaf $ASCII_ART_COLOR)\$\$ |  \$\$ |\$\$ |      \$\$\\   \$\$ |\$\$ |  \$\$ |\$\$ |\\\$  /\$\$ |\$\$ |            $(tput sgr0)"
+    "$(tput setaf $ASCII_ART_COLOR)\$\$ |  \$\$ |\$\$\$\$\$\$\$\$\\ \\\$\$\$\$\$\$  |\\\$\$\$\$\$\$  |\$\$ | \\_/ \$\$ |\$\$\$\$\$\$\$\$\\       $(tput sgr0)"
+    "$(tput setaf $ASCII_ART_COLOR)\\__|  \\__|\\________| \\______/  \\______/ \\__|     \\__|\\________|      $(tput sgr0)"
     "                                                                     "
     "                                                                     "
     "                                                                     "
