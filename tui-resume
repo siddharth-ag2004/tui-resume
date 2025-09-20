@@ -82,7 +82,7 @@ RESUME_CONTENT=(
     "RELEVANT COURSEWORK"
     "--------------------------------------------------------------------------------------------"
     "  • Data Structures and Algorithms      • Computer Systems Organization     • Data and Applications"
-    "  • Introduction to Information Security  • Operating Systems and Networks    • Statistical Methods in AI"
+    "  • Introduction to Information Security  • Operating Systems and Networks  • Statistical Methods in AI"
     "  • Software Programming for Performance  • Probability and Statistics      • Computer Graphics"
     "  • Distributed Systems                 • Computer Vision                   • Digital Image Processing"
     ""
@@ -190,7 +190,9 @@ colorize_line() {
         # Apply colors based on line content
         case "$line" in
             \**\**)
-                line="${line//\*/}" # Remove `**`
+                if [[ "$line" == *"${PROJECT_TITLES[@]}"* ]]; then
+                    line="${line//\*/}" # Remove `**` only for project titles
+                fi
                 tput bold; tput setaf "$PROJECT_TITLE_COLOR" ;; # Orange for project titles
             EDUCATION|EXPERIENCE|RELEVANT*|PROJECTS|SKILLS|ACHIEVEMENTS)
                 tput bold; tput setaf "$TITLE_COLOR" ;; # Blue for section titles
@@ -199,6 +201,7 @@ colorize_line() {
             *) tput setaf "$TEXT_COLOR" ;; # Grey Pink for general text
         esac
     fi
+
 
     echo -n "$line"
     tput sgr0 # Reset formatting
