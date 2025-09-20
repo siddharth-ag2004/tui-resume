@@ -12,11 +12,11 @@ Usage
 
 You can run the script over the internet with:
 
-    curl https://example.com/tui-resume | bash
+    bash <(curl -sL https://raw.githubusercontent.com/siddharth-ag2004/tui-resume/main/tui-resume)
 
 Or, pull this source code and run it manually:
 
-    git clone git@github.com:yourusername/tui-resume.git
+    git clone git@github.com:siddharth-ag2004/tui-resume.git
     cd tui-resume
     ./tui-resume
 

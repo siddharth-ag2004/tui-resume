@@ -15,6 +15,7 @@ TITLE_COLOR=39    # Blue for section titles
 NAME_COLOR=45     # Cyan for the name
 PROJECT_TITLE_COLOR=202 # Orange for project titles
 BORDER_COLOR=17 # Alternate dark blue for borders
+ASCII_ART_COLOR=219 # Red for ASCII art
 
 # --- BASH 3.x COMPATIBLE PROJECT DATA ---
 # Using two separate, indexed arrays. The index of a title
@@ -40,8 +41,27 @@ PROJECT_URLS=(
     "https://github.com/himanshuyv/ClarityAI"
 )
 
+# Function to center-align a line of text with an additional offset of -40
+center_align() {
+    local text="$1"
+    local text_length=${#text}
+    local padding=$(( (COLUMNS - text_length ) / 2 ))
+    printf "%*s%s" "$padding" "" "$text"
+}
+
 # The full resume content is stored in this array.
 RESUME_CONTENT=(
+    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$\$\$\$\$\$\\  \$\$\$\$\$\$\$\$\\  \$\$\$\$\$\$\\  \$\$\\   \$\$\\ \$\$\\      \$\$\\ \$\$\$\$\$\$\$\$\\       $(tput sgr0)")"
+    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$  __\$\$\\ \$\$  _____|\$\$  __\$\$\\ \$\$ |  \$\$ |\$\$\$\\    \$\$\$ |\$\$  _____|      $(tput sgr0)")"
+    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$ |  \$\$ |\$\$ |      \$\$ /  \\__|\$\$ |  \$\$ |\$\$\$\$\\  \$\$\$\$ |\$\$ |            $(tput sgr0)")"
+    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$\$\$\$\$\$  |\$\$\$\$\$\\    \\\$\$\$\$\$\$\\  \$\$ |  \$\$ |\$\$\\\$\$\\\$\$ \$\$ |\$\$\$\$\$\\          $(tput sgr0)")"
+    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$  __\$\$< \$\$  __|    \\____\$\$\\ \$\$ |  \$\$ |\$\$ \\\$\$\$  \$\$ |\$\$  __|         $(tput sgr0)")"
+    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$ |  \$\$ |\$\$ |      \$\$\\   \$\$ |\$\$ |  \$\$ |\$\$ |\\\$  /\$\$ |\$\$ |            $(tput sgr0)")"
+    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\$\$ |  \$\$ |\$\$\$\$\$\$\$\$\\ \\\$\$\$\$\$\$  |\\\$\$\$\$\$\$  |\$\$ | \\_/ \$\$ |\$\$\$\$\$\$\$\$\\       $(tput sgr0)")"
+    "$(center_align "$(tput setaf $ASCII_ART_COLOR)\\__|  \\__|\\________| \\______/  \\______/ \\__|     \\__|\\________|      $(tput sgr0)")"
+    "                                                                     "
+    "                                                                     "
+    "                                                                     "
     "SIDDHARTH AGARWAL"
     "sidag2020@gmail.com | Github | Linkedin | +91 8097734940"
     ""
@@ -154,6 +174,39 @@ draw-box() {
     tput sgr0
 }
 
+# Function to colorize a line of text based on its content
+colorize_line() {
+    local line="$1"
+    local is_project_title=false
+
+    # Check if the line matches a project title
+    for project_title in "${PROJECT_TITLES[@]}"; do
+        if [[ "$line" == "$project_title" ]]; then
+            tput setaf 27 # Blue for hovered project titles
+            tput smul     # Underline the text
+            is_project_title=true
+            break
+        fi
+    done
+
+    if ! $is_project_title; then
+        # Apply colors based on line content
+        case "$line" in
+            \**\**)
+                line="${line//\*/}" # Remove `**`
+                tput bold; tput setaf "$PROJECT_TITLE_COLOR" ;; # Orange for project titles
+            EDUCATION|EXPERIENCE|RELEVANT*|PROJECTS|SKILLS|ACHIEVEMENTS)
+                tput bold; tput setaf "$TITLE_COLOR" ;; # Blue for section titles
+            "SIDDHARTH AGARWAL")
+                tput bold; tput setaf "$NAME_COLOR" ;; # Cyan for the name
+            *) tput setaf "$TEXT_COLOR" ;; # Grey Pink for general text
+        esac
+    fi
+
+    echo -n "$line"
+    tput sgr0 # Reset formatting
+}
+
 # Draws the resume content, highlighting the selected line.
 draw-resume() {
     local start_y=6 end_y=$((LINES-6)) x=12
@@ -169,46 +222,10 @@ draw-resume() {
             tput cup "$current_y" "$x"
 
             if (( content_index == SELECTED_LINE )); then
-                tput setab "$HIGHLIGHT_BG"
-                # Check if the selected line is a project title
-                local is_project_title=false
-                for project_title in "${PROJECT_TITLES[@]}"; do
-                    if [[ "$line" == "$project_title" ]]; then
-                        tput setaf 27 # Change text color to blue for hovered link
-                        tput smul    # Underline the text
-                        is_project_title=true
-                        break
-                    fi
-                done
-                if ! $is_project_title; then
-                    # Reapply the original color for non-link lines
-                    case "$line" in
-                        \**\**)
-                            line="${line//\*/}" # Remove `**`
-                            tput bold; tput setaf "$PROJECT_TITLE_COLOR" ;; # Use project title color
-                        EDUCATION|EXPERIENCE|RELEVANT*|PROJECTS|SKILLS|ACHIEVEMENTS)
-                            tput bold; tput setaf "$TITLE_COLOR" ;; # Use section title color
-                        "SIDDHARTH AGARWAL")
-                            tput bold; tput setaf "$NAME_COLOR" ;; # Use name color
-                        *) tput setaf "$TEXT_COLOR" ;; # Use general text color
-                    esac
-                fi
-            else
-                # Apply the original color for non-selected lines
-                case "$line" in
-                    \**\**)
-                        line="${line//\*/}" # Remove `**`
-                        tput bold; tput setaf "$PROJECT_TITLE_COLOR" ;; # Use project title color
-                    EDUCATION|EXPERIENCE|RELEVANT*|PROJECTS|SKILLS|ACHIEVEMENTS)
-                        tput bold; tput setaf "$TITLE_COLOR" ;; # Use section title color
-                    "SIDDHARTH AGARWAL")
-                        tput bold; tput setaf "$NAME_COLOR" ;; # Use name color
-                    *) tput setaf "$TEXT_COLOR" ;; # Use general text color
-                esac
+                tput setab "$HIGHLIGHT_BG" # Highlight background for selected line
             fi
 
-            echo -n "$line"
-            tput rmul # Remove underline after printing the line
+            colorize_line "$line" # Use the colorize_line function
         fi
         tput sgr0
     done
